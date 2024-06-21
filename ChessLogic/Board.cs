@@ -1,4 +1,8 @@
-﻿namespace ChessLogic
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ChessLogic
 {
     public class Board
     {
@@ -25,29 +29,34 @@
 
         private void AddStartPieces()
         {
-            this[0, 0] = new Rook(Player.Black);
-            this[0, 1] = new Knight(Player.Black);
-            this[0, 2] = new Bishop(Player.Black);
-            this[0, 3] = new Queen(Player.Black);
-            this[0, 4] = new King(Player.Black);
-            this[0, 5] = new Bishop(Player.Black);
-            this[0, 6] = new Knight(Player.Black);
-            this[0, 7] = new Rook(Player.Black);
+            PlacePiece(new Position(0, 0), new Rook(Player.Black));
+            PlacePiece(new Position(0, 1), new Knight(Player.Black));
+            PlacePiece(new Position(0, 2), new Bishop(Player.Black));
+            PlacePiece(new Position(0, 3), new Queen(Player.Black));
+            PlacePiece(new Position(0, 4), new King(Player.Black));
+            PlacePiece(new Position(0, 5), new Bishop(Player.Black));
+            PlacePiece(new Position(0, 6), new Knight(Player.Black));
+            PlacePiece(new Position(0, 7), new Rook(Player.Black));
 
-            this[7, 0] = new Rook(Player.White);
-            this[7, 1] = new Knight(Player.White);
-            this[7, 2] = new Bishop(Player.White);
-            this[7, 3] = new Queen(Player.White);
-            this[7, 4] = new King(Player.White);
-            this[7, 5] = new Bishop(Player.White);
-            this[7, 6] = new Knight(Player.White);
-            this[7, 7] = new Rook(Player.White);
+            PlacePiece(new Position(7, 0), new Rook(Player.White));
+            PlacePiece(new Position(7, 1), new Knight(Player.White));
+            PlacePiece(new Position(7, 2), new Bishop(Player.White));
+            PlacePiece(new Position(7, 3), new Queen(Player.White));
+            PlacePiece(new Position(7, 4), new King(Player.White));
+            PlacePiece(new Position(7, 5), new Bishop(Player.White));
+            PlacePiece(new Position(7, 6), new Knight(Player.White));
+            PlacePiece(new Position(7, 7), new Rook(Player.White));
 
             for (int c = 0; c < 8; c++)
             {
-                this[1, c] = new Pawn(Player.Black);
-                this[6, c] = new Pawn(Player.White);
+                PlacePiece(new Position(1, c), new Pawn(Player.Black));
+                PlacePiece(new Position(6, c), new Pawn(Player.White));
             }
+        }
+
+        public void PlacePiece(Position position, Piece piece)
+        {
+            pieces[position.Row, position.Column] = piece;
         }
 
         public static bool IsInside(Position pos)
@@ -96,7 +105,7 @@
 
             foreach (Position pos in PiecePositions())
             {
-                copy[pos] = this[pos].Copy();
+                copy.PlacePiece(pos, this[pos].Copy());
             }
 
             return copy;

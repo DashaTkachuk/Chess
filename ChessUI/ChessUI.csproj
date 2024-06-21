@@ -11,6 +11,8 @@
     <None Remove="Assets\BishopB.png" />
     <None Remove="Assets\BishopW.png" />
     <None Remove="Assets\Board.png" />
+    <None Remove="Assets\clear.png" />
+    <None Remove="Assets\done.png" />
     <None Remove="Assets\KingB.png" />
     <None Remove="Assets\KingW.png" />
     <None Remove="Assets\KnightB.png" />
@@ -31,6 +33,8 @@
     <Resource Include="Assets\BishopB.png" />
     <Resource Include="Assets\BishopW.png" />
     <Resource Include="Assets\Board.png" />
+    <Resource Include="Assets\clear.png" />
+    <Resource Include="Assets\done.png" />
     <Resource Include="Assets\KingB.png" />
     <Resource Include="Assets\KingW.png" />
     <Resource Include="Assets\KnightB.png" />

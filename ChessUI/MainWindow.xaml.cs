@@ -15,19 +15,22 @@ namespace ChessUI
         private readonly Image[,] pieceImages = new Image[8, 8];
         private readonly Rectangle[,] highlights = new Rectangle[8, 8];
         private readonly Dictionary<Position, Move> moveCache = new Dictionary<Position, Move>();
-        private readonly ModeMenu modeMenu;
+        private readonly ModeMenu modeMenu = new ModeMenu();
         private readonly AI ai = new AI();
         private GameState gameState;
         private Position selectedPos = null;
         private bool isPlayerTurn = true;
 
+        private readonly PiecePlacementTracker placementTracker = new PiecePlacementTracker();
+
         public MainWindow()
         {
             InitializeComponent();
-            modeMenu = new ModeMenu();
-            modeMenu.ModeOnePlayerSelected += StartGameOnePlayer;
-            modeMenu.ModeTwoPlayersSelected += StartGameTwoPlayers;
-            MenuContainer.Content = modeMenu;
+            InitializeBoard();
+            BoardGrid.AllowDrop = true;
+            BoardGrid.DragEnter += BoardGrid_DragEnter;
+            BoardGrid.DragOver += BoardGrid_DragOver;
+            BoardGrid.Drop += BoardGrid_Drop;
         }
 
         private void StartGameOnePlayer(Mode mode)
@@ -46,7 +49,6 @@ namespace ChessUI
         private void InitializeNewGame()
         {
             MenuContainer.Content = null;
-            InitializeBoard();
             gameState = new GameState(Player.White, Board.Initial());
             DrawBoard(gameState.Board);
         }
@@ -77,7 +79,7 @@ namespace ChessUI
                 for (int c = 0; c < 8; c++)
                 {
                     Piece piece = board[r, c];
-                    pieceImages[r, c].Source = Images.GetImage(piece);
+                    pieceImages[r, c].Source = Images.GetImage(piece); // Используем метод GetImage из класса Images
                 }
             }
         }
@@ -227,7 +229,8 @@ namespace ChessUI
                 if (option == Option.Restart)
                 {
                     RestartGame();
-                } else if (option == Option.Clear)
+                }
+                else if (option == Option.Clear)
                 {
                     ClearBoard();
                 }
@@ -266,6 +269,7 @@ namespace ChessUI
             modeMenu.ModeOnePlayerSelected += StartGameOnePlayer;
             modeMenu.ModeTwoPlayersSelected += StartGameTwoPlayers;
         }
+
         private void ClearBoard()
         {
             for (int r = 0; r < 8; r++)
@@ -274,6 +278,7 @@ namespace ChessUI
                 {
                     pieceImages[r, c].Source = null;
                     highlights[r, c].Fill = Brushes.Transparent;
+                    gameState.Board.PlacePiece(new Position(r, c), null); // Очищаем доску от фигур
                 }
             }
         }
@@ -282,13 +287,12 @@ namespace ChessUI
         {
             if (selectedPos != null)
             {
-                gameState.Board[selectedPos.Row, selectedPos.Column] = null;
+                gameState.Board.PlacePiece(selectedPos, null);
                 pieceImages[selectedPos.Row, selectedPos.Column].Source = null;
                 selectedPos = null;
                 HideHighlights();
             }
         }
-
 
         private void MakeComputerMove()
         {
@@ -307,6 +311,130 @@ namespace ChessUI
                     isPlayerTurn = !isPlayerTurn;
                 }
             }
+        }
+
+        private void BoardGrid_DragEnter(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.Bitmap))
+            {
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        private void BoardGrid_DragOver(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.Bitmap))
+            {
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        private void BoardGrid_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.Bitmap))
+            {
+                Point dropPosition = e.GetPosition(BoardGrid);
+                Position pos = ToSquarePosition(dropPosition);
+
+                ImageSource droppedImageSource = (ImageSource)e.Data.GetData(DataFormats.Bitmap);
+
+                Piece droppedPiece = IdentifyPiece(droppedImageSource);
+
+                if (droppedPiece != null)
+                {
+                    int maxPiecesAllowed = GetMaxPiecesAllowed(droppedPiece);
+                    int currentPiecesOfType = CountPiecesOfType(droppedPiece);
+
+                    if (currentPiecesOfType < maxPiecesAllowed)
+                    {
+                        pieceImages[pos.Row, pos.Column].Source = droppedImageSource;
+                        placementTracker.TrackPiece(droppedPiece, pos);
+
+                        // Обновляем состояние доски
+                        gameState.Board.PlacePiece(pos, droppedPiece);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Максимальное количество фигур данного типа ({maxPiecesAllowed}) уже на доске.");
+                    }
+                }
+            }
+        }
+
+        private Piece IdentifyPiece(ImageSource imageSource)
+        {
+            foreach (var pair in Images.GetWhiteSources())
+            {
+                if (pair.Value == imageSource)
+                {
+                    return new Piece(pair.Key, Player.White);
+                }
+            }
+
+            foreach (var pair in Images.GetBlackSources())
+            {
+                if (pair.Value == imageSource)
+                {
+                    return new Piece(pair.Key, Player.Black);
+                }
+            }
+
+            return null; // Если фигура не найдена
+        }
+
+        private int GetMaxPiecesAllowed(Piece piece)
+        {
+            return piece.Type switch
+            {
+                PieceType.Pawn => 8,
+                PieceType.Bishop => 2,
+                PieceType.Knight => 2,
+                PieceType.Rook => 2,
+                PieceType.Queen => 1,
+                PieceType.King => 1,
+                _ => 0,
+            };
+        }
+
+        private int CountPiecesOfType(Piece piece)
+        {
+            int count = 0;
+
+            // Проходим по всем клеткам доски и считаем количество фигур заданного типа и цвета
+            for (int r = 0; r < 8; r++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    if (gameState.Board[r, c]?.Type == piece.Type && gameState.Board[r, c]?.Color == piece.Color)
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count;
+        }
+
+        public class PiecePlacementTracker
+        {
+            private readonly Dictionary<Piece, Position> piecePositions = new Dictionary<Piece, Position>();
+
+            public void TrackPiece(Piece piece, Position position)
+            {
+                piecePositions[piece] = position;
+            }
+
+            public Position GetPiecePosition(Piece piece)
+            {
+                return piecePositions.ContainsKey(piece) ? piecePositions[piece] : null; // или выбросить исключение, если фигура не найдена
+            }
+
+            public void RemovePiece(Piece piece)
+            {
+                piecePositions.Remove(piece);
+            }
+
+            // Дополнительные методы по необходимости
         }
     }
 }

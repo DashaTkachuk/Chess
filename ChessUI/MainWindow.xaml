@@ -5,31 +5,36 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChessUI"
         mc:Ignorable="d"
-        Title="Chess" Width="600" SizeToContent="Height"
+        Title="Chess" Width="800" Height="600"
         WindowStartupLocation="CenterScreen"
         Background="#101010"
         KeyDown="Window_KeyDown">
-    <Viewbox>
-        <Grid x:Name="BoardGrid"
-              Width="600"
-              Height="600"
-              MouseDown="BoardGrid_MouseDown">
-            <Grid.Background>
-                <ImageBrush ImageSource="Assets/Board.png" />
-            </Grid.Background>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="100"/>
+        </Grid.ColumnDefinitions>
 
-            <UniformGrid x:Name="HighlightGrid"
-                         Rows="8"
-                         Columns="8">
-            </UniformGrid>
+        <!-- Ліве меню з білими фігурами -->
+        <local:WhitePiecesMenu x:Name="WhitePiecesMenu" Grid.Column="0"/>
 
-            <UniformGrid x:Name="PieceGrid"
-                         Rows="8"
-                         Columns="8"
-                         RenderOptions.BitmapScalingMode="HighQuality">
-            </UniformGrid>
+        <!-- Дошка та головне вміст -->
+        <Viewbox Grid.Column="1">
+            <Grid x:Name="BoardGrid" Width="600" Height="600" MouseDown="BoardGrid_MouseDown">
+                <Grid.Background>
+                    <ImageBrush ImageSource="Assets/Board.png" />
+                </Grid.Background>
 
-            <ContentControl x:Name="MenuContainer"/>
-        </Grid>
-    </Viewbox>
+                <UniformGrid x:Name="HighlightGrid" Rows="8" Columns="8"></UniformGrid>
+                <UniformGrid x:Name="PieceGrid" Rows="8" Columns="8" RenderOptions.BitmapScalingMode="HighQuality"></UniformGrid>
+
+                <!-- Цей ContentControl використовується для меню паузи, гри, перемоги тощо -->
+                <ContentControl x:Name="MenuContainer"/>
+            </Grid>
+        </Viewbox>
+
+        <!-- Праве меню з чорними фігурами -->
+        <local:BlackPiecesMenu x:Name="BlackPiecesMenu" Grid.Column="2"/>
+    </Grid>
 </Window>

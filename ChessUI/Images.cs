@@ -52,5 +52,15 @@ namespace ChessUI
 
             return GetImage(piece.Color, piece.Type);
         }
+
+        public static Dictionary<PieceType, ImageSource> GetWhiteSources()
+        {
+            return whiteSources;
+        }
+
+        public static Dictionary<PieceType, ImageSource> GetBlackSources()
+        {
+            return blackSources;
+        }
     }
 }
